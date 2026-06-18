@@ -1,0 +1,209 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Plano 3D - Gimnasio en casa</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <header class="topbar">
+        <div class="brand">
+          <span class="brand-mark" aria-hidden="true">3D</span>
+          <div>
+            <h1>Plano 3D</h1>
+            <p>Gimnasio en casa</p>
+          </div>
+        </div>
+
+        <div class="toolbar" aria-label="Controles principales">
+          <button id="view3dBtn" class="icon-button active" type="button" title="Vista 3D" aria-label="Vista 3D">
+            <span aria-hidden="true">3D</span>
+          </button>
+          <button id="viewTopBtn" class="icon-button" type="button" title="Vista superior" aria-label="Vista superior">
+            <span aria-hidden="true">TOP</span>
+          </button>
+          <button id="themeBtn" class="icon-button" type="button" title="Modo oscuro" aria-label="Cambiar modo claro u oscuro">
+            <span id="themeIcon" aria-hidden="true">☾</span>
+          </button>
+          <button id="saveBtn" class="tool-button" type="button">Guardar</button>
+          <button id="exportBtn" class="tool-button" type="button">Exportar</button>
+          <button id="importBtn" class="tool-button" type="button">Importar</button>
+          <input id="importFile" type="file" accept="application/json" hidden />
+        </div>
+      </header>
+
+      <main class="workspace">
+        <aside class="side-panel left-panel" aria-label="Objetos disponibles">
+          <section class="panel-section">
+            <div class="section-title">
+              <h2>Objetos</h2>
+              <button id="clearBtn" class="text-button danger" type="button">Limpiar</button>
+            </div>
+            <div class="object-grid" id="presetGrid">
+              <button class="object-tile" type="button" data-preset="rack">
+                <span class="tile-icon rack-icon" aria-hidden="true"></span>
+                <strong>Rack</strong>
+                <small>120 x 60 cm</small>
+              </button>
+              <button class="object-tile" type="button" data-preset="bench">
+                <span class="tile-icon bench-icon" aria-hidden="true"></span>
+                <strong>Banca</strong>
+                <small>120 x 50 cm</small>
+              </button>
+              <button class="object-tile" type="button" data-preset="treadmill">
+                <span class="tile-icon treadmill-icon" aria-hidden="true"></span>
+                <strong>Caminadora</strong>
+                <small>160 x 75 cm</small>
+              </button>
+              <button class="object-tile" type="button" data-preset="dumbbells">
+                <span class="tile-icon dumbbell-icon" aria-hidden="true"></span>
+                <strong>Mancuernas</strong>
+                <small>100 x 45 cm</small>
+              </button>
+              <button class="object-tile" type="button" data-preset="bike">
+                <span class="tile-icon bike-icon" aria-hidden="true"></span>
+                <strong>Bicicleta</strong>
+                <small>110 x 55 cm</small>
+              </button>
+              <button class="object-tile" type="button" data-preset="free">
+                <span class="tile-icon free-icon" aria-hidden="true"></span>
+                <strong>Zona libre</strong>
+                <small>100 x 100 cm</small>
+              </button>
+            </div>
+          </section>
+
+          <section class="panel-section">
+            <h2>Objeto personalizado</h2>
+            <form id="customForm" class="form-grid">
+              <label>
+                Nombre
+                <input id="customName" type="text" value="Objeto nuevo" maxlength="32" />
+              </label>
+              <label>
+                Ancho cm
+                <input id="customWidth" type="number" min="5" max="500" step="1" value="60" />
+              </label>
+              <label>
+                Largo cm
+                <input id="customDepth" type="number" min="5" max="500" step="1" value="60" />
+              </label>
+              <label>
+                Alto cm
+                <input id="customHeight" type="number" min="1" max="300" step="1" value="45" />
+              </label>
+              <label class="color-row">
+                Color
+                <input id="customColor" type="color" value="#2f7d63" />
+              </label>
+              <button class="primary-button" type="submit">Anadir objeto</button>
+            </form>
+          </section>
+
+          <section class="panel-section">
+            <h2>Lista</h2>
+            <div id="objectList" class="object-list"></div>
+          </section>
+        </aside>
+
+        <section class="stage" aria-label="Vista del plano">
+          <div id="viewport" class="viewport">
+            <canvas id="sceneCanvas"></canvas>
+            <div class="canvas-hud top-left">
+              <span id="roomBadge">220 x 360 cm</span>
+              <span id="objectBadge">0 objetos</span>
+            </div>
+            <div class="canvas-hud bottom-left">
+              <span>Arrastra objetos para moverlos</span>
+              <span id="saveStatus">Sin cambios</span>
+            </div>
+          </div>
+        </section>
+
+        <aside class="side-panel right-panel" aria-label="Inspector de propiedades">
+          <section class="panel-section">
+            <div class="section-title">
+              <h2>Espacio</h2>
+              <span class="measure-chip">cm</span>
+            </div>
+            <div class="form-grid">
+              <label>
+                Ancho
+                <input id="roomWidth" type="number" min="50" max="1000" value="220" />
+              </label>
+              <label>
+                Largo
+                <input id="roomLength" type="number" min="50" max="1000" value="360" />
+              </label>
+              <label>
+                Alto muros
+                <input id="roomHeight" type="number" min="100" max="400" value="240" />
+              </label>
+              <label class="check-row">
+                <input id="showWalls" type="checkbox" checked />
+                Ver muros
+              </label>
+              <label class="check-row">
+                <input id="showGrid" type="checkbox" checked />
+                Ver grilla
+              </label>
+            </div>
+            <div class="metric-row">
+              <span>Area usada</span>
+              <strong id="areaMetric">0%</strong>
+            </div>
+          </section>
+
+          <section class="panel-section inspector">
+            <div class="section-title">
+              <h2>Seleccion</h2>
+              <button id="deleteBtn" class="text-button danger" type="button" disabled>Eliminar</button>
+            </div>
+            <div id="emptyInspector" class="empty-state">Selecciona o anade un objeto para editarlo.</div>
+            <form id="inspectorForm" class="form-grid hidden">
+              <label class="wide">
+                Nombre
+                <input id="objName" type="text" maxlength="32" />
+              </label>
+              <label>
+                Ancho
+                <input id="objWidth" type="number" min="1" max="1000" />
+              </label>
+              <label>
+                Largo
+                <input id="objDepth" type="number" min="1" max="1000" />
+              </label>
+              <label>
+                Alto
+                <input id="objHeight" type="number" min="1" max="400" />
+              </label>
+              <label>
+                Desde izq.
+                <input id="objLeft" type="number" min="0" max="1000" />
+              </label>
+              <label>
+                Desde frente
+                <input id="objFront" type="number" min="0" max="1000" />
+              </label>
+              <label>
+                Rotacion
+                <input id="objRotation" type="number" min="0" max="359" />
+              </label>
+              <label class="color-row">
+                Color
+                <input id="objColor" type="color" />
+              </label>
+              <button id="duplicateBtn" class="secondary-button wide" type="button">Duplicar</button>
+            </form>
+          </section>
+        </aside>
+      </main>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+    <script src="./app.js"></script>
+  </body>
+</html>
