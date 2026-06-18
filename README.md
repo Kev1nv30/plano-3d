@@ -30,3 +30,7 @@ http://127.0.0.1:4173/
 ```
 
 No necesita instalacion ni build. Usa Three.js desde CDN.
+
+## Publicacion
+
+El repositorio local ya esta inicializado en `main`. Para publicarlo en GitHub como `Kev1nv30/plano-3d`, revisa `PUBLICAR-GITHUB.md`.
