@@ -1,36 +1,60 @@
 # Plano 3D
 
-Editor simple para planificar un gimnasio en casa en un espacio 3D.
+Modelador web simple para planificar espacios 3D. La app esta enfocada en escritorio web y toma como referencia el flujo base tipo SketchUp: dibujar, seleccionar, empujar/tirar, transformar, organizar y exportar.
 
-## Que incluye
+## Funciones principales
 
-- Espacio base editable, iniciado en 220 cm de ancho por 360 cm de largo.
-- Objetos simples para rack, banca, caminadora, mancuernas, bicicleta y zona libre.
-- Objeto personalizado con ancho, largo, alto y color.
-- Seleccion de objetos desde el plano o la lista.
-- Edicion numerica en centimetros: posicion, medidas, rotacion y color.
-- Arrastre directo de objetos sobre el plano.
-- Vista 3D y vista superior.
-- Modo claro y modo oscuro.
-- Guardado local en el navegador.
-- Exportacion e importacion de planos en JSON.
+- Vista 3D y vista superior con orbit, pan, zoom y ajustar vista.
+- Seleccion, movimiento con snapping, rotacion, escala, offset, flip y matrices.
+- Dibujo de rectangulos sobre el piso con altura configurable.
+- Push/Pull para cambiar la altura de un volumen.
+- Caja de medidas para aplicar dimensiones, altura, rotacion o escala numerica.
+- Inferencias simples de grid, ejes, centros, esquinas y puntos medios.
+- Cinta metrica, guias visuales y limpieza de guias.
+- Objetos predefinidos y objeto personalizado.
+- Inspector con medidas, posicion, rotacion, color, material, tag, bloqueo y visibilidad.
+- Tags con visibilidad, materiales basicos, grupos y componentes.
+- Escenas con snapshot de camara, visibilidad, grilla, muros y section plane.
+- Section plane visual por eje X/Z.
+- Guardado local en navegador.
+- Importacion/exportacion JSON y exportacion de malla OBJ/STL.
+- Undo/redo para operaciones principales.
 
-## Como usarlo
+## Estructura
 
-Abre `index.html` en el navegador o sirve la carpeta con un servidor local:
+```text
+index.html
+styles.css
+src/
+  core/
+    config.js        # presets, tags, materiales y claves
+    utils.js         # helpers generales
+    geometry.js      # snapping, bounds, clamps y calculos
+    state.js         # estado inicial y sanitizacion
+    commands.js      # undo/redo por snapshots
+  io/
+    storage.js       # localStorage
+    exporters.js     # JSON, OBJ y STL
+  view/
+    dom.js           # referencias DOM
+    scene-renderer.js# Three.js, camara, guias, previews y cortes
+    tool-controller.js# herramientas de modelado e interaccion
+  app-controller.js  # orquestacion de UI, estado y comandos
+  main.js            # bootstrap
+```
+
+## Como ejecutarlo
+
+Sirve la carpeta con un servidor local:
 
 ```bash
-python -m http.server 4173
+python -m http.server 4174 --bind 127.0.0.1
 ```
 
 Luego entra a:
 
 ```text
-http://127.0.0.1:4173/
+http://127.0.0.1:4174/
 ```
 
-No necesita instalacion ni build. Usa Three.js desde CDN.
-
-## Publicacion
-
-El repositorio local ya esta inicializado en `main`. Para publicarlo en GitHub como `Kev1nv30/plano-3d`, revisa `PUBLICAR-GITHUB.md`.
+La app usa Three.js desde CDN y no necesita build.

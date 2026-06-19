@@ -3,7 +3,8 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Plano 3D - Gimnasio en casa</title>
+    <title>Plano 3D - Modelador web</title>
+    <link rel="icon" href="data:," />
     <link rel="stylesheet" href="./styles.css" />
   </head>
   <body>
@@ -13,11 +14,17 @@
           <span class="brand-mark" aria-hidden="true">3D</span>
           <div>
             <h1>Plano 3D</h1>
-            <p>Gimnasio en casa</p>
+            <p>Modelador web</p>
           </div>
         </div>
 
         <div class="toolbar" aria-label="Controles principales">
+          <button id="undoBtn" class="icon-button" type="button" title="Deshacer" aria-label="Deshacer">
+            <span aria-hidden="true">↶</span>
+          </button>
+          <button id="redoBtn" class="icon-button" type="button" title="Rehacer" aria-label="Rehacer">
+            <span aria-hidden="true">↷</span>
+          </button>
           <button id="view3dBtn" class="icon-button active" type="button" title="Vista 3D" aria-label="Vista 3D">
             <span aria-hidden="true">3D</span>
           </button>
@@ -27,15 +34,35 @@
           <button id="themeBtn" class="icon-button" type="button" title="Modo oscuro" aria-label="Cambiar modo claro u oscuro">
             <span id="themeIcon" aria-hidden="true">☾</span>
           </button>
+          <button id="fitBtn" class="tool-button" type="button">Ajustar</button>
           <button id="saveBtn" class="tool-button" type="button">Guardar</button>
-          <button id="exportBtn" class="tool-button" type="button">Exportar</button>
+          <div class="menu-group">
+            <button id="exportJsonBtn" class="tool-button" type="button">JSON</button>
+            <button id="exportObjBtn" class="tool-button" type="button">OBJ</button>
+            <button id="exportStlBtn" class="tool-button" type="button">STL</button>
+          </div>
           <button id="importBtn" class="tool-button" type="button">Importar</button>
           <input id="importFile" type="file" accept="application/json" hidden />
         </div>
       </header>
 
       <main class="workspace">
-        <aside class="side-panel left-panel" aria-label="Objetos disponibles">
+        <aside class="tool-rail" aria-label="Herramientas de modelado">
+          <div id="toolset" class="toolset">
+            <button class="tool-icon active" type="button" data-tool="select" title="Seleccionar (V)" aria-label="Seleccionar">↖</button>
+            <button class="tool-icon" type="button" data-tool="rectangle" title="Rectangulo (R)" aria-label="Rectangulo">▭</button>
+            <button class="tool-icon" type="button" data-tool="pushpull" title="Push/Pull (P)" aria-label="Push/Pull">⇳</button>
+            <button class="tool-icon" type="button" data-tool="move" title="Mover (M)" aria-label="Mover">✣</button>
+            <button class="tool-icon" type="button" data-tool="rotate" title="Rotar (Q)" aria-label="Rotar">⟳</button>
+            <button class="tool-icon" type="button" data-tool="scale" title="Escalar (S)" aria-label="Escalar">⤢</button>
+            <button class="tool-icon" type="button" data-tool="offset" title="Offset (O)" aria-label="Offset">▣</button>
+            <button class="tool-icon" type="button" data-tool="tape" title="Cinta metrica (T)" aria-label="Cinta metrica">⌁</button>
+            <button class="tool-icon" type="button" data-tool="guide" title="Guia (G)" aria-label="Guia">╋</button>
+            <button class="tool-icon" type="button" data-tool="orbit" title="Orbitar" aria-label="Orbitar">◌</button>
+          </div>
+        </aside>
+
+        <aside class="side-panel left-panel" aria-label="Objetos y organizacion">
           <section class="panel-section">
             <div class="section-title">
               <h2>Objetos</h2>
@@ -102,8 +129,35 @@
             </form>
           </section>
 
+          <section class="panel-section compact-section">
+            <h2>Herramienta</h2>
+            <p id="toolHint" class="tool-hint"></p>
+            <div class="form-grid">
+              <label class="wide">
+                Caja de medidas
+                <input id="measurementInput" type="text" placeholder="120 x 60 x 45" />
+              </label>
+              <label>
+                Snap cm
+                <input id="snapSize" type="number" min="1" max="100" value="10" />
+              </label>
+              <label>
+                Alto dibujo
+                <input id="drawHeight" type="number" min="1" max="600" value="45" />
+              </label>
+              <label>
+                Offset
+                <input id="offsetDistance" type="number" min="1" max="200" value="10" />
+              </label>
+              <label>
+                Matriz
+                <input id="arrayCount" type="number" min="2" max="20" value="3" />
+              </label>
+            </div>
+          </section>
+
           <section class="panel-section">
-            <h2>Lista</h2>
+            <h2>Lista / Outliner</h2>
             <div id="objectList" class="object-list"></div>
           </section>
         </aside>
@@ -114,9 +168,10 @@
             <div class="canvas-hud top-left">
               <span id="roomBadge">220 x 360 cm</span>
               <span id="objectBadge">0 objetos</span>
+              <span id="inferenceBadge">Snap</span>
             </div>
             <div class="canvas-hud bottom-left">
-              <span>Arrastra objetos para moverlos</span>
+              <span id="navModeBadge">Vista editable</span>
               <span id="saveStatus">Sin cambios</span>
             </div>
           </div>
@@ -139,7 +194,7 @@
               </label>
               <label>
                 Alto muros
-                <input id="roomHeight" type="number" min="100" max="400" value="240" />
+                <input id="roomHeight" type="number" min="100" max="600" value="240" />
               </label>
               <label class="check-row">
                 <input id="showWalls" type="checkbox" checked />
@@ -161,7 +216,7 @@
               <h2>Seleccion</h2>
               <button id="deleteBtn" class="text-button danger" type="button" disabled>Eliminar</button>
             </div>
-            <div id="emptyInspector" class="empty-state">Selecciona o anade un objeto para editarlo.</div>
+            <div id="emptyInspector" class="empty-state">Selecciona, dibuja o anade un objeto para editarlo.</div>
             <form id="inspectorForm" class="form-grid hidden">
               <label class="wide">
                 Nombre
@@ -177,7 +232,7 @@
               </label>
               <label>
                 Alto
-                <input id="objHeight" type="number" min="1" max="400" />
+                <input id="objHeight" type="number" min="1" max="600" />
               </label>
               <label>
                 Desde izq.
@@ -195,8 +250,81 @@
                 Color
                 <input id="objColor" type="color" />
               </label>
+              <label>
+                Tag
+                <select id="objTag"></select>
+              </label>
+              <label>
+                Material
+                <select id="objMaterial"></select>
+              </label>
+              <label class="check-row">
+                <input id="objLocked" type="checkbox" />
+                Bloqueado
+              </label>
+              <label class="check-row">
+                <input id="objVisible" type="checkbox" checked />
+                Visible
+              </label>
               <button id="duplicateBtn" class="secondary-button wide" type="button">Duplicar</button>
+              <div class="button-grid wide">
+                <button id="groupBtn" class="secondary-button" type="button">Grupo</button>
+                <button id="componentBtn" class="secondary-button" type="button">Componente</button>
+                <button id="arrayBtn" class="secondary-button" type="button">Matriz</button>
+                <button id="flipBtn" class="secondary-button" type="button">Voltear</button>
+              </div>
             </form>
+          </section>
+
+          <section class="panel-section compact-section">
+            <h2>Materiales</h2>
+            <div id="materialList" class="swatch-list"></div>
+          </section>
+
+          <section class="panel-section compact-section">
+            <h2>Tags</h2>
+            <div id="tagList" class="tag-list"></div>
+          </section>
+
+          <section class="panel-section compact-section">
+            <div class="section-title">
+              <h2>Escenas</h2>
+              <button id="addSceneBtn" class="text-button" type="button">Anadir</button>
+            </div>
+            <div id="sceneList" class="scene-list"></div>
+          </section>
+
+          <section class="panel-section compact-section">
+            <div class="section-title">
+              <h2>Guias</h2>
+              <button id="clearGuidesBtn" class="text-button danger" type="button">Limpiar</button>
+            </div>
+            <div id="guideList" class="guide-list"></div>
+          </section>
+
+          <section class="panel-section compact-section">
+            <h2>Seccion</h2>
+            <div class="form-grid">
+              <label class="check-row">
+                <input id="sectionEnabled" type="checkbox" />
+                Activar corte
+              </label>
+              <label>
+                Eje
+                <select id="sectionAxis">
+                  <option value="x">X</option>
+                  <option value="z">Z</option>
+                </select>
+              </label>
+              <label>
+                Offset
+                <input id="sectionOffset" type="number" min="-1000" max="1000" value="0" />
+              </label>
+              <label class="check-row">
+                <input id="sectionInvert" type="checkbox" />
+                Invertir
+              </label>
+            </div>
           </section>
         </aside>
       </main>
@@ -204,6 +332,17 @@
 
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
-    <script src="./app.js"></script>
+    <script src="./src/core/config.js"></script>
+    <script src="./src/core/utils.js"></script>
+    <script src="./src/core/geometry.js"></script>
+    <script src="./src/core/state.js"></script>
+    <script src="./src/core/commands.js"></script>
+    <script src="./src/io/storage.js"></script>
+    <script src="./src/io/exporters.js"></script>
+    <script src="./src/view/dom.js"></script>
+    <script src="./src/view/scene-renderer.js"></script>
+    <script src="./src/view/tool-controller.js"></script>
+    <script src="./src/app-controller.js"></script>
+    <script src="./src/main.js"></script>
   </body>
 </html>
