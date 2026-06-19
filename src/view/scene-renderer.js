@@ -181,15 +181,46 @@
     }
 
     addGrid(state) {
-      const size = Math.max(state.room.width, state.room.length);
-      const divisions = Math.max(4, Math.round(size / Math.max(5, state.settings.snapSize || 10)));
-      const grid = new this.THREE.GridHelper(
-        size,
-        divisions,
-        this.theme === "dark" ? 0x6e817a : 0x9aa7a2,
-        this.theme === "dark" ? 0x27342f : 0xcdd5d1
+      const points = [];
+      const minX = -state.room.width / 2;
+      const maxX = state.room.width / 2;
+      const minZ = -state.room.length / 2;
+      const maxZ = state.room.length / 2;
+      const step = Math.max(5, state.settings.snapSize || 10);
+
+      for (let x = minX; x <= maxX + 0.001; x += step) {
+        const lineX = Math.min(x, maxX);
+        points.push(
+          new this.THREE.Vector3(lineX, 1.2, minZ),
+          new this.THREE.Vector3(lineX, 1.2, maxZ)
+        );
+      }
+      if ((maxX - minX) % step !== 0) {
+        points.push(
+          new this.THREE.Vector3(maxX, 1.2, minZ),
+          new this.THREE.Vector3(maxX, 1.2, maxZ)
+        );
+      }
+
+      for (let z = minZ; z <= maxZ + 0.001; z += step) {
+        const lineZ = Math.min(z, maxZ);
+        points.push(
+          new this.THREE.Vector3(minX, 1.2, lineZ),
+          new this.THREE.Vector3(maxX, 1.2, lineZ)
+        );
+      }
+      if ((maxZ - minZ) % step !== 0) {
+        points.push(
+          new this.THREE.Vector3(minX, 1.2, maxZ),
+          new this.THREE.Vector3(maxX, 1.2, maxZ)
+        );
+      }
+
+      const geometry = new this.THREE.BufferGeometry().setFromPoints(points);
+      const grid = new this.THREE.LineSegments(
+        geometry,
+        new this.THREE.LineBasicMaterial({ color: this.theme === "dark" ? 0x27342f : 0xcdd5d1 })
       );
-      grid.position.y = 1.2;
       this.root.add(grid);
     }
 

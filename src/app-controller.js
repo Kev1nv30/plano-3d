@@ -3,7 +3,14 @@
 
   const { presets, THEME_KEY } = window.Plano3D.config;
   const { CommandStack } = window.Plano3D.commands;
-  const { clampObjectToRoom, findOpenSlot, getObjectVolume, getRoomArea } = window.Plano3D.geometry;
+  const {
+    clampObjectToRoom,
+    findOpenSlot,
+    getObjectVolume,
+    getRoomArea,
+    objectFootprint,
+    objectFootprintSize
+  } = window.Plano3D.geometry;
   const { createObject, sanitizeState } = window.Plano3D.state;
   const { exportJson, exportObj, exportStl } = window.Plano3D.exporters;
   const { clampNumber, deepClone, makeId, normalizeRotation } = window.Plano3D.utils;
@@ -206,10 +213,11 @@
         object.transparent = material.transparent;
       }
 
-      const left = clampNumber(this.dom.inspectorInputs.left.value, 0, this.state.room.width, 0);
-      const front = clampNumber(this.dom.inspectorInputs.front.value, 0, this.state.room.length, 0);
-      object.x = -this.state.room.width / 2 + left + object.width / 2;
-      object.z = -this.state.room.length / 2 + front + object.depth / 2;
+      const footprint = objectFootprintSize(object);
+      const left = clampNumber(this.dom.inspectorInputs.left.value, 0, Math.max(0, this.state.room.width - footprint.width), 0);
+      const front = clampNumber(this.dom.inspectorInputs.front.value, 0, Math.max(0, this.state.room.length - footprint.depth), 0);
+      object.x = -this.state.room.width / 2 + left + footprint.width / 2;
+      object.z = -this.state.room.length / 2 + front + footprint.depth / 2;
 
       clampObjectToRoom(object, this.state.room);
       this.markDirty();
@@ -447,7 +455,7 @@
           <span class="color-dot" style="background:${object.color}"></span>
           <span>
             <strong></strong>
-            <span>${object.width} x ${object.depth} x ${object.height} cm - ${tag?.name || "Sin tag"}</span>
+            <span>${Math.round(object.width)} x ${Math.round(object.depth)} x ${Math.round(object.height)} cm - ${tag?.name || "Sin tag"}</span>
           </span>
         `;
         button.querySelector("strong").textContent = `${object.visible === false ? "[oculto] " : ""}${object.name}`;
@@ -468,8 +476,9 @@
       this.dom.inspectorForm.classList.toggle("hidden", !object);
       this.populateSelects();
       if (!object) return;
-      const left = Math.round(object.x + this.state.room.width / 2 - object.width / 2);
-      const front = Math.round(object.z + this.state.room.length / 2 - object.depth / 2);
+      const footprint = objectFootprint(object);
+      const left = Math.round(footprint.minX + this.state.room.width / 2);
+      const front = Math.round(footprint.minZ + this.state.room.length / 2);
       this.dom.inspectorInputs.name.value = object.name;
       this.dom.inspectorInputs.width.value = Math.round(object.width);
       this.dom.inspectorInputs.depth.value = Math.round(object.depth);
@@ -712,8 +721,9 @@
 
     syncInspectorPosition(object) {
       if (!object || object.id !== this.selectedId) return;
-      this.dom.inspectorInputs.left.value = Math.round(object.x + this.state.room.width / 2 - object.width / 2);
-      this.dom.inspectorInputs.front.value = Math.round(object.z + this.state.room.length / 2 - object.depth / 2);
+      const footprint = objectFootprint(object);
+      this.dom.inspectorInputs.left.value = Math.round(footprint.minX + this.state.room.width / 2);
+      this.dom.inspectorInputs.front.value = Math.round(footprint.minZ + this.state.room.length / 2);
     }
 
     syncInspectorRotation(object) {

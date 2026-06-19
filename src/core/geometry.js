@@ -3,32 +3,63 @@
 
   const { clampNumber, normalizeRotation, roundTo } = window.Plano3D.utils;
 
+  function objectFootprintSize(object) {
+    const rotation = normalizeRotation(object.rotation);
+    const radians = rotation * Math.PI / 180;
+    let cos = Math.abs(Math.cos(radians));
+    let sin = Math.abs(Math.sin(radians));
+    if (cos < 1e-10) cos = 0;
+    if (sin < 1e-10) sin = 0;
+    if (Math.abs(cos - 1) < 1e-10) cos = 1;
+    if (Math.abs(sin - 1) < 1e-10) sin = 1;
+    return {
+      width: object.width * cos + object.depth * sin,
+      depth: object.width * sin + object.depth * cos
+    };
+  }
+
   function clampObjectToRoom(object, room) {
-    object.width = Math.min(Math.max(1, Number(object.width) || 1), room.width);
-    object.depth = Math.min(Math.max(1, Number(object.depth) || 1), room.length);
+    object.width = Math.max(1, Number(object.width) || 1);
+    object.depth = Math.max(1, Number(object.depth) || 1);
     object.height = clampNumber(object.height, 1, Math.max(400, room.height * 2), 45);
-    const minX = -room.width / 2 + object.width / 2;
-    const maxX = room.width / 2 - object.width / 2;
-    const minZ = -room.length / 2 + object.depth / 2;
-    const maxZ = room.length / 2 - object.depth / 2;
+    object.rotation = normalizeRotation(object.rotation);
+
+    let footprint = objectFootprintSize(object);
+    const fitScale = Math.min(
+      1,
+      room.width / Math.max(1, footprint.width),
+      room.length / Math.max(1, footprint.depth)
+    );
+    if (fitScale < 1 - 1e-9) {
+      object.width = Math.max(1, object.width * fitScale);
+      object.depth = Math.max(1, object.depth * fitScale);
+      footprint = objectFootprintSize(object);
+    }
+
+    const minX = -room.width / 2 + footprint.width / 2;
+    const maxX = room.width / 2 - footprint.width / 2;
+    const minZ = -room.length / 2 + footprint.depth / 2;
+    const maxZ = room.length / 2 - footprint.depth / 2;
     object.x = clampNumber(object.x, minX, maxX, 0);
     object.z = clampNumber(object.z, minZ, maxZ, 0);
-    object.rotation = normalizeRotation(object.rotation);
     return object;
   }
 
   function rectanglesOverlap(a, b, gap) {
     const safeGap = Number(gap) || 0;
-    return Math.abs(a.x - b.x) * 2 < a.width + b.width + safeGap &&
-      Math.abs(a.z - b.z) * 2 < a.depth + b.depth + safeGap;
+    const aFootprint = objectFootprintSize(a);
+    const bFootprint = objectFootprintSize(b);
+    return Math.abs(a.x - b.x) * 2 < aFootprint.width + bFootprint.width + safeGap &&
+      Math.abs(a.z - b.z) * 2 < aFootprint.depth + bFootprint.depth + safeGap;
   }
 
   function findOpenSlot(object, state) {
     const step = Math.max(10, state.settings.snapSize || 10);
-    const minX = -state.room.width / 2 + object.width / 2;
-    const maxX = state.room.width / 2 - object.width / 2;
-    const minZ = -state.room.length / 2 + object.depth / 2;
-    const maxZ = state.room.length / 2 - object.depth / 2;
+    const footprint = objectFootprintSize(object);
+    const minX = -state.room.width / 2 + footprint.width / 2;
+    const maxX = state.room.width / 2 - footprint.width / 2;
+    const minZ = -state.room.length / 2 + footprint.depth / 2;
+    const maxZ = state.room.length / 2 - footprint.depth / 2;
 
     for (let z = minZ; z <= maxZ; z += step) {
       for (let x = minX; x <= maxX; x += step) {
@@ -58,11 +89,12 @@
   }
 
   function objectFootprint(object) {
+    const footprint = objectFootprintSize(object);
     return {
-      minX: object.x - object.width / 2,
-      maxX: object.x + object.width / 2,
-      minZ: object.z - object.depth / 2,
-      maxZ: object.z + object.depth / 2
+      minX: object.x - footprint.width / 2,
+      maxX: object.x + footprint.width / 2,
+      minZ: object.z - footprint.depth / 2,
+      maxZ: object.z + footprint.depth / 2
     };
   }
 
@@ -118,6 +150,7 @@
     getObjectVolume,
     getRoomArea,
     objectFootprint,
+    objectFootprintSize,
     rectanglesOverlap
   };
 }());
